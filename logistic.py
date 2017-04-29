@@ -16,7 +16,7 @@ import util
 SEED = 42
 TAG = 'logreg'      # Part of output file name,
 
-def bagged_set(xtr, ytr, xval, model, n_runs, seed=7):
+def bagged_set(xtr, ytr, xval, model, n_runs):
     '''
     Repeatedly trains a model on xtr, ytr and predicts on xval.
     Results are averaged.
@@ -27,14 +27,12 @@ def bagged_set(xtr, ytr, xval, model, n_runs, seed=7):
         xval: numpy array of out-of-fold data
         model: the configured sklearn-compatible model to use
         n_runs: number of times to retrain
-        seed: starting seed; this is changed on each run
 
     Returns:
         vector of CV predictions for xval, averaged over the n_runs
     '''
     preds = np.zeros(xval.shape[0])
     for n in range(0, n_runs):
-        model.set_params(random_state=seed + n)
         model.fit(xtr, ytr)
         preds += model.predict_proba(xval)[:, 1]
     return preds / n_runs

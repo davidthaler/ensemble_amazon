@@ -1,5 +1,6 @@
 '''
-Combo features in Pandas. Intended for use on Amazon access data.
+Count-combination features in Pandas. 
+Intended for use on Amazon access data.
 '''
 import pandas as pd
 import itertools as it
