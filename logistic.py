@@ -1,12 +1,12 @@
 '''
-A refactoring of "bagged_set" code from KazAnovas github CV-prediction.
+Logistic regression model with 2-way interactions. 
+Based on code in KazAnovas ensemble_amazon repo.
 '''
 import numpy as np
 import pandas as pd
 import argparse
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import roc_auc_score
 
 import features
@@ -14,7 +14,7 @@ import util
 
 
 SEED = 42
-TAG = 'logreg2way'      # Part of output file name,
+TAG = 'logreg'      # Part of output file name,
 
 def bagged_set(xtr, ytr, xval, model, n_runs, seed=7):
     '''
@@ -40,15 +40,11 @@ def bagged_set(xtr, ytr, xval, model, n_runs, seed=7):
     return preds / n_runs
 
 
-def main(C=0.7, nruns=1, nfolds=5, tag=TAG):
+def main(k=2, C=0.7, nruns=1, nfolds=5, tag=TAG):
     xtr, ytr, xte = util.load_data()
 
-    # Create one-hot encoded features for 2-way interactions
-    xtr, xte = features.make2way(xtr, xte)
-    enc = OneHotEncoder()
-    enc.fit(np.vstack([xtr, xte]))
-    xtr = enc.transform(xtr)
-    xte = enc.transform(xte)
+    # Create one-hot encoded features for 1..k-way interactions
+    xtr, xte = features.range_combos(xtr, xte, k)
 
     cv_preds = np.zeros(xtr.shape[0])
     model = LogisticRegression(C=C)
@@ -63,11 +59,11 @@ def main(C=0.7, nruns=1, nfolds=5, tag=TAG):
         cv_preds[te_ix] = preds
 
         roc_score = roc_auc_score(yval, preds)
-        print('Fold %d AUC: %.5f' % (i + 1, roc_score))
+        print('Fold %d AUC: %.6f' % (i + 1, roc_score))
         auc += roc_score
         i += 1
 
-    print('Mean AUC: %.5f' % (auc / nfolds))
+    print('Mean AUC: %.6f' % (auc / nfolds))
     util.save_cv_preds(cv_preds, tag)
 
     # Fit on all of train, make final predictions on all test
@@ -78,6 +74,8 @@ def main(C=0.7, nruns=1, nfolds=5, tag=TAG):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Run the logistic regression model.')
+    parser.add_argument('--k', type=int, default=2,
+            help='Make 1..k way combinations of the feature values.')
     parser.add_argument('--C', type=float, default=0.7, 
             help='C parameter of logistic regression (liblinear), default 0.7')
     parser.add_argument('--nfolds', type=int, default=5,
