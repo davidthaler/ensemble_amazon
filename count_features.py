@@ -41,7 +41,7 @@ def apply_counts(df, cts):
     return out[ct_field].fillna(0).astype(int)
 
 
-def combo_features(df_in, df_out, n):
+def count_combinations(df_in, df_out, n):
     '''
     Produces count features for all n-combinations of columns in df_in.
     Applies them to df_out (without changing df_out). The frames df_in and df_out 
@@ -65,7 +65,7 @@ def combo_features(df_in, df_out, n):
     return out
     
 
-def range_combo(df_in, df_out, n_vals):
+def range_counts(df_in, df_out, kmax):
     '''
     Computes value-count features for k-combinations of columns in df_in/df_out
     for all k in n_vals.
@@ -73,11 +73,10 @@ def range_combo(df_in, df_out, n_vals):
     Args:
         df_in: input data frame for collecting counts
         df_out: data frame to which counts are applied
-        n_vals: list of int. Produces counts for k-combinations 
-                of the columns for all k in n_vals
+        kmax: int, produces counts for 1...kmax combinations of the columns
 
     Returns:
         Pandas DataFrame with the counts applied to df_out.
     '''
-    chunks = [combo_features(df_in, df_out, n) for n in n_vals]
+    chunks = [count_combinations(df_in, df_out, n) for n in range(1, kmax + 1)]
     return pd.concat(chunks, axis=1)

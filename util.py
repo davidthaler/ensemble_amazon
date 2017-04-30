@@ -9,19 +9,26 @@ import pandas as pd
 FMT = '%.6f'
 
 
-def load_data():
+def load_data(as_pandas=False):
     '''
     Loads training and test data for Amazon Access problem.
 
+    Args:
+        as_pandas: Default False. If True, return pandas DataFrame or Series 
+                objects instead of numpy arrays
+
     Returns:
-        3-tuple on ndarrays with training data, training labels and test data.
+        3-tuple of ndarrays or pandas Series/DataFrame objects 
+        with training data, training labels and test data.
     '''
     xtr = pd.read_csv('../data/train.csv').drop('ROLE_CODE', axis=1)
-    ytr = xtr['ACTION'].values
+    ytr = xtr['ACTION']
     del xtr['ACTION']
-    xtr = xtr.values
-    xte = pd.read_csv('../data/test.csv').drop(['id', 'ROLE_CODE'], axis=1).values
-    return xtr, ytr, xte
+    xte = pd.read_csv('../data/test.csv').drop(['id', 'ROLE_CODE'], axis=1)
+    if as_pandas:
+        return xtr, ytr, xte
+    else:
+        return xtr.values, ytr.values, xte.values
 
 
 def write_submission(preds, tag):
