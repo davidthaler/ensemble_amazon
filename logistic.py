@@ -11,31 +11,10 @@ from sklearn.metrics import roc_auc_score
 
 import features
 import util
-
+import models
 
 SEED = 42
 TAG = 'logreg'      # Part of output file name,
-
-def bagged_set(xtr, ytr, xval, model, n_runs):
-    '''
-    Repeatedly trains a model on xtr, ytr and predicts on xval.
-    Results are averaged.
-
-    Args:
-        xtr: numpy array of training data
-        ytr: numpy vector (1-D ndarray) of labels
-        xval: numpy array of out-of-fold data
-        model: the configured sklearn-compatible model to use
-        n_runs: number of times to retrain
-
-    Returns:
-        vector of CV predictions for xval, averaged over the n_runs
-    '''
-    preds = np.zeros(xval.shape[0])
-    for n in range(0, n_runs):
-        model.fit(xtr, ytr)
-        preds += model.predict_proba(xval)[:, 1]
-    return preds / n_runs
 
 
 def main(k=2, C=0.7, nruns=1, nfolds=5, tag=TAG):
@@ -53,7 +32,7 @@ def main(k=2, C=0.7, nruns=1, nfolds=5, tag=TAG):
     for tr_ix, te_ix in kfold.split(xtr, ytr):
         x, xval = xtr[tr_ix], xtr[te_ix]
         y, yval = ytr[tr_ix], ytr[te_ix]
-        preds = bagged_set(x, y, xval, model, nruns)
+        preds = models.rerun(x, y, xval, model, nruns, SEED)
         cv_preds[te_ix] = preds
 
         roc_score = roc_auc_score(yval, preds)
@@ -65,7 +44,7 @@ def main(k=2, C=0.7, nruns=1, nfolds=5, tag=TAG):
     util.save_cv_preds(cv_preds, tag)
 
     # Fit on all of train, make final predictions on all test
-    preds = bagged_set(xtr, ytr, xte, model, nruns)
+    preds = models.rerun(xtr, ytr, xte, model, nruns, SEED)
     util.write_submission(preds, tag)
 
 
