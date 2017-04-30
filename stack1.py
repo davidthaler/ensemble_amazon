@@ -3,8 +3,6 @@ Implements a 1-level stack model on the Amazon Access data.
 '''
 import numpy as np
 import argparse
-from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import ExtraTreesClassifier
 
 import util
@@ -29,26 +27,10 @@ def main(ntree=100, nfolds=5, nruns=1, tag=TAG):
                                 n_jobs=3,
                                 random_state=1)
     
-    # Other set-up 
-    cv_preds = np.zeros(xtr.shape[0])
-    auc = 0.0
-    i = 0
-    kfold = StratifiedKFold(n_splits=nfolds, shuffle=True, random_state=SEED)
+    # Run CV
+    cv_preds = models.cv_loop(xtr, ytr, model, nfolds, nruns, SEED)
 
-    # main CV loop
-    for tr_ix, te_ix in kfold.split(xtr, ytr):
-        x, xval = xtr[tr_ix], xtr[te_ix]
-        y, yval = ytr[tr_ix], ytr[te_ix]
-        preds = models.rerun(x, y, xval, model, nruns, SEED)
-        cv_preds[te_ix] = preds
-
-        roc_score = roc_auc_score(yval, preds)
-        print('Fold %d AUC: %.6f' % (i + 1, roc_score))
-        auc += roc_score
-        i += 1
-    
-    # Wrap up CV
-    print('Mean AUC: %.6f' % (auc / nfolds))
+    # Save CV predictions
     util.save_cv_preds(cv_preds, tag)
 
     # Fit on all of train, make final predictions on all test
