@@ -13,11 +13,12 @@ import count_features
 import util
 import models
 
-SEED = 42
+SEED = util.SEED
 TAG = 'xgbct'      # Part of output file name
 
 
 def main(kmax=1, ntree=100, nruns=1, nfolds=5, tag=TAG):
+    #Load data
     xtr, ytr, xte = util.load_data(as_pandas=True)
 
     # Create value-count features
@@ -27,6 +28,7 @@ def main(kmax=1, ntree=100, nruns=1, nfolds=5, tag=TAG):
     xtr = xtr.values
     xte = xte.values
 
+    # Create model
     model = XGBClassifier(n_estimators=ntree, 
                           learning_rate=0.02,
                           gamma=1,

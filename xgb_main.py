@@ -13,11 +13,12 @@ from sklearn.preprocessing import OneHotEncoder
 import util
 import models
 
-SEED = 42
+SEED = util.SEED
 TAG = 'xgb01'      # Part of output file name,
 
 
 def main(ntree=100, nruns=1, nfolds=5, tag=TAG):
+    # Load data
     xtr, ytr, xte = util.load_data()
 
     # Create one-hot encoded features
@@ -26,7 +27,7 @@ def main(ntree=100, nruns=1, nfolds=5, tag=TAG):
     xtr = enc.transform(xtr)
     xte = enc.transform(xte)
 
-    cv_preds = np.zeros(xtr.shape[0])
+    # Create model
     model = XGBClassifier(n_estimators=ntree, 
                           learning_rate=0.12,
                           gamma=0.01,
@@ -35,6 +36,8 @@ def main(ntree=100, nruns=1, nfolds=5, tag=TAG):
                           subsample=0.6,
                           colsample_bytree=0.7,
                           seed=1)
+    
+    cv_preds = np.zeros(xtr.shape[0])
     auc = 0.0
     i = 0
     kfold = StratifiedKFold(n_splits=nfolds, shuffle=True, random_state=SEED)

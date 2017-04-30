@@ -13,18 +13,21 @@ import features
 import util
 import models
 
-SEED = 42
+SEED = util.SEED
 TAG = 'logreg'      # Part of output file name,
 
 
 def main(k=2, C=0.7, nruns=1, nfolds=5, tag=TAG):
+    # Load data
     xtr, ytr, xte = util.load_data()
 
     # Create one-hot encoded features for 1..k-way interactions
     xtr, xte = features.range_combos(xtr, xte, k)
 
-    cv_preds = np.zeros(xtr.shape[0])
+    # Create model
     model = LogisticRegression(C=C)
+
+    cv_preds = np.zeros(xtr.shape[0])
     auc = 0.0
     i = 0
     kfold = StratifiedKFold(n_splits=nfolds, shuffle=True, random_state=SEED)
@@ -41,6 +44,7 @@ def main(k=2, C=0.7, nruns=1, nfolds=5, tag=TAG):
         i += 1
 
     print('Mean AUC: %.6f' % (auc / nfolds))
+    # Save CV predictions for stacking later
     util.save_cv_preds(cv_preds, tag)
 
     # Fit on all of train, make final predictions on all test

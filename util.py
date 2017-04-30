@@ -13,6 +13,9 @@ FMT = '%.6f'
 SUBMIT_TEMPLATE = '../submissions/submission_%s.csv.gz'
 CV_PRED_TEMPLATE  = '../artifacts/cv_predictions_%s.csv'
 
+# random number seed for all files
+SEED = 42
+
 def load_data(as_pandas=False):
     '''
     Loads training and test data for Amazon Access problem.

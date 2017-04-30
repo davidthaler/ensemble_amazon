@@ -10,7 +10,7 @@ from sklearn.ensemble import ExtraTreesClassifier
 import util
 import models
 
-SEED = 42
+SEED = util.SEED
 TAG = 'stack1'      # Part of output file name
 COLS = ['logreg2way', 'logreg3way', 'logreg4way', 
         'xgb01', 'xgb2ct', 'xgb3ct', 'xgbct']
