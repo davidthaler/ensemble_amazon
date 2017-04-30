@@ -1,3 +1,7 @@
+'''
+Sparse 0-1 features for integer-categorical values and combinations 
+of values. Used by logistic models.
+'''
 import numpy as np
 import itertools as it
 from sklearn.preprocessing import OneHotEncoder
