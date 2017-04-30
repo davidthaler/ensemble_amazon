@@ -1,46 +1,41 @@
 '''
-XGBoost on combination value-count featurea
-Based on code in KazAnovas ensemble_amazon repo.
+Implements a 1-level stack model on the Amazon Access data.
 '''
 import numpy as np
-import pandas as pd
 import argparse
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
-from xgboost.sklearn import XGBClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 
-import count_features
 import util
 import models
 
 SEED = 42
-TAG = 'xgbct'      # Part of output file name
+TAG = 'stack1'      # Part of output file name
+COLS = ['logreg2way', 'logreg3way', 'logreg4way', 
+        'xgb01', 'xgb2ct', 'xgb3ct', 'xgbct']
 
+def main(ntree=100, nfolds=5, nruns=1, tag=TAG):
+    # Load data
+    _, ytr, _ = util.load_data()
+    xtr = util.reload_cv_predictions(COLS)
+    xte = util.reload_submissions(COLS)
 
-def main(kmax=1, ntree=100, nruns=1, nfolds=5, tag=TAG):
-    xtr, ytr, xte = util.load_data(as_pandas=True)
-
-    # Create value-count features
-    xall = pd.concat([xtr, xte])
-    xtr = count_features.range_counts(xall, xtr, kmax)
-    xte = count_features.range_counts(xall, xte, kmax)
-    xtr = xtr.values
-    xte = xte.values
-
-    model = XGBClassifier(n_estimators=ntree, 
-                          learning_rate=0.02,
-                          gamma=1,
-                          max_depth=20,
-                          min_child_weight=0.1,
-                          subsample=0.9,
-                          colsample_bytree=0.5,
-                          seed=1)
-
+    # Set-up model
+    model = ExtraTreesClassifier(n_estimators=ntree,
+                                criterion='entropy',
+                                max_depth=9,
+                                max_features=6,
+                                n_jobs=3,
+                                random_state=1)
+    
+    # Other set-up 
     cv_preds = np.zeros(xtr.shape[0])
     auc = 0.0
     i = 0
     kfold = StratifiedKFold(n_splits=nfolds, shuffle=True, random_state=SEED)
 
+    # main CV loop
     for tr_ix, te_ix in kfold.split(xtr, ytr):
         x, xval = xtr[tr_ix], xtr[te_ix]
         y, yval = ytr[tr_ix], ytr[te_ix]
@@ -51,7 +46,8 @@ def main(kmax=1, ntree=100, nruns=1, nfolds=5, tag=TAG):
         print('Fold %d AUC: %.6f' % (i + 1, roc_score))
         auc += roc_score
         i += 1
-
+    
+    # Wrap up CV
     print('Mean AUC: %.6f' % (auc / nfolds))
     util.save_cv_preds(cv_preds, tag)
 
@@ -62,11 +58,9 @@ def main(kmax=1, ntree=100, nruns=1, nfolds=5, tag=TAG):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Run the xgboost model on value-count features')
-    parser.add_argument('--kmax', type=int, default=1,
-            help='Make 1..k way combinations of the feature values. Default 1.')
+        description='Run the stack model on CV-predictions.')
     parser.add_argument('--ntree', type=int, default=100, 
-                    help='number of trees for xgboost to use. Default 100.')
+        help='number of trees for ExtraTrees model to use in stacking. Default 100.')
     parser.add_argument('--nfolds', type=int, default=5,
                     help='number of CV folds, default 5.')
     parser.add_argument('--nruns', type=int, default=1, 
