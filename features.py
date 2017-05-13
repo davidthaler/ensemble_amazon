@@ -25,6 +25,21 @@ def make_combo(x, k):
     return np.column_stack(out_cols)
 
 
+def make_combos(x, kmax):
+    '''
+    Makes dense integer-categorical features representing 1...kmax 
+    combinations of the columns in x.
+
+    Args:
+        x: ndarray of train or test data
+        kmax: makes combination features of order 1...kmax
+
+    Returns:
+        features representing the 1..kmax-combinations of features in x
+    '''
+    return np.hstack([make_combo(x, k) for k in range(1, kmax + 1)])
+
+
 def range_combos(xtr, xte, kmax):
     '''
     Makes features representing 1...kmax combinations of columns in xtr/xte.
